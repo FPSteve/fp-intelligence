@@ -1,0 +1,28 @@
+{
+  "product": "fp-intelligence",
+  "datasetVersion": "1.4",
+  "lastVerifiedAt": "2026-03-20",
+  "verificationOwner": "@Backend-eng-sonnet",
+  "canonicalFile": "data/positions.json",
+  "aggregationRule": "dataStatus === 'verified' only",
+  "rowKeyRule": "rowKey = articleId (single-asset) | articleId#ASSET (multi-asset)",
+  "qaManifest": {
+    "totalRows": 16,
+    "uniqueArticleIds": 13,
+    "uniqueRowKeys": 16,
+    "multiAssetArticles": [
+      "ev-holder-revenue-token-valuation-framework",
+      "no-free-lunch-reflections-on-arbitrum-and-optimism"
+    ],
+    "dataStatusCounts": {
+      "verified": 11,
+      "sourced": 2,
+      "reference_only": 3
+    }
+  },
+  "dataStatusDefinitions": {
+    "verified": "publishedAt + entryPriceUsd + btcAtPub + article-asset mapping all confirmed by team",
+    "sourced": "btcAtPub verified; entryPriceUsd from article snapshot or fixed backup — mismatch possible",
+    "reference_only": "price discrepancy unresolved OR not on Binance with verifiedAt null — display only, never aggregate"
+  }
+}
