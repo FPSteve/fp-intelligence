@@ -1067,6 +1067,8 @@ function render(prices){
   // Precompute return percentiles for visible items
   const withRetHasPrices=withRet.filter(x=>x.callRet!==null).map(x=>x.callRet).sort((a,b)=>b-a);
   const totalWithRet=withRetHasPrices.length;
+  // Max abs return for relative bar scaling
+  const maxAbsRetInView=totalWithRet>0?Math.max(...withRetHasPrices.map(Math.abs),1):100;
   for(const {t,callRet:preCallRet,ex:preEx} of withRet){
     const priceData=prices[t.coinId];
     const cur=priceData?.usd;
@@ -1098,7 +1100,7 @@ function render(prices){
       <td class="date-cell">${t.pubDate}<br><span class="days-ago">${pd<7?'<span style="color:var(--green);font-size:9px">● </span>':pd<30?'<span style="color:var(--amber);font-size:9px">● </span>':''}${pd}<span data-ko>일 전</span><span data-en>d ago</span></span></td>
       <td class="mono col-pubprice">${fmt(t.pubPrice)}</td>
       <td class="mono">${cur?(()=>{const ch=prices[t.coinId]?.change24h;const cs=ch!=null?(ch>=0?'up':'dn'):'';const ss=ch!=null?(ch>=0?'+':'')+ch.toFixed(1)+'%':'';const mult=t.pubPrice&&cur?(cur/t.pubPrice).toFixed(2)+'x':'';return`<div style="font-size:13px;font-weight:600">${fmt(cur)}${isStatic?'<span style="font-size:9px;color:var(--muted);margin-left:3px">est.</span>':''}</div><div style="display:flex;align-items:center;gap:6px;margin-top:2px">${mult?`<span style="font-size:10px;color:var(--text2)">${mult}</span>`:''}${ch!=null?`<span style="font-size:10px;font-family:'JetBrains Mono',monospace;color:${cs==='up'?'var(--green)':'var(--red)'};font-weight:600">${ss}</span>`:''}</div>`})():'<span style="color:var(--text2)">—</span>'}</td>
-      <td><div class="ret-bar-wrap"><span class="ret ${rc}">${crs}</span>${callRet!==null?`<div class="ret-bar-bg"><div class="ret-bar-fill ${rc}" style="width:${Math.min(Math.abs(callRet),50)/50*100}%"></div></div>`:''}${callRet!==null&&totalWithRet>1?`<div style="font-size:9px;color:var(--muted);margin-top:2px;font-family:'JetBrains Mono',monospace" title="수익률 순위 / Return rank">#${withRetHasPrices.indexOf(callRet)+1}<span style="opacity:0.6">/${totalWithRet}</span></div>`:''}
+      <td><div class="ret-bar-wrap"><span class="ret ${rc}">${crs}</span>${callRet!==null?`<div class="ret-bar-bg"><div class="ret-bar-fill ${rc}" style="width:${Math.min(Math.abs(callRet)/maxAbsRetInView*100,100)}%"></div></div>`:''}${callRet!==null&&totalWithRet>1?`<div style="font-size:9px;color:var(--muted);margin-top:2px;font-family:'JetBrains Mono',monospace" title="수익률 순위 / Return rank">#${withRetHasPrices.indexOf(callRet)+1}<span style="opacity:0.6">/${totalWithRet}</span></div>`:''}
       </div></td>
       <td class="vbtc ${vbc} col-vbtc">${vbs}${ex!==null&&Math.abs(ex)>5?`<div style="display:flex;gap:1px;margin-top:2px">${[1,2,3,4,5].map(i=>`<div style="width:4px;height:3px;border-radius:1px;background:${Math.abs(ex)/40*5>=i?(ex>=0?'var(--green)':'var(--red)'):'var(--border)'};opacity:0.7"></div>`).join('')}</div>`:''}</td>
       <td style="white-space:nowrap"><a href="${t.link}" target="_blank" class="read-lnk" onclick="event.stopPropagation()"><span data-ko>원문</span><span data-en>Read</span> →</a> <span style="font-size:12px;color:var(--text2);margin-left:4px" title="테제 접기/펼치기">▾</span></td>
