@@ -1092,7 +1092,7 @@ function render(prices){
     <tr class="dr ${pd<=3?'row-new-pulse':''}" id="dr-${thId}" style="${rowGlow};cursor:pointer;${t.dataStatus!=='verified'?'opacity:0.75':''}" onclick="selectRow(this);toggleThesis('${thId}')">
       <td><div class="asset-cell">
         <div class="asset-ico" style="background:${t.bg};color:${t.color}">${t.symbol.slice(0,3)}</div>
-        <div><div class="asset-nm" style="display:flex;align-items:center;gap:5px">${t.name}${t.dataStatus==='verified'&&t.verifiedAt?'<span title="데이터 검증완료" style="font-size:9px;color:var(--green);margin-left:3px;opacity:0.8">✓</span>':t.dataStatus==='sourced'?'<span title="소스 있음, 미검증 — 집계 제외" style="font-size:9px;color:var(--amber);margin-left:3px">~</span>':t.dataStatus==='reference_only'?'<span title="참고 데이터 — 집계 제외" style="font-size:9px;color:var(--muted);margin-left:3px">⊘</span>':''}${multiCovMap[t.coinId]>1?`<span style="font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;background:rgba(78,128,238,0.15);color:var(--accent)">${multiCovMap[t.coinId]}×</span>`:''}</div><div class="asset-sy">${t.symbol}</div></div>
+        <div><div class="asset-nm" style="display:flex;align-items:center;gap:5px">${q&&t.name.toLowerCase().includes(q)?t.name.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark style="background:rgba(255,193,0,0.25);color:inherit;border-radius:2px;padding:0 1px">$1</mark>'):t.name}${t.dataStatus==='verified'&&t.verifiedAt?'<span title="데이터 검증완료" style="font-size:9px;color:var(--green);margin-left:3px;opacity:0.8">✓</span>':t.dataStatus==='sourced'?'<span title="소스 있음, 미검증 — 집계 제외" style="font-size:9px;color:var(--amber);margin-left:3px">~</span>':t.dataStatus==='reference_only'?'<span title="참고 데이터 — 집계 제외" style="font-size:9px;color:var(--muted);margin-left:3px">⊘</span>':''}${multiCovMap[t.coinId]>1?`<span style="font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;background:rgba(78,128,238,0.15);color:var(--accent)">${multiCovMap[t.coinId]}×</span>`:''}</div><div class="asset-sy">${q&&t.symbol.toLowerCase().includes(q)?t.symbol.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark style="background:rgba(255,193,0,0.25);color:inherit;border-radius:2px;padding:0 1px">$1</mark>'):t.symbol}</div></div>
       </div></td>
       <td><span class="tag ${t.tc}" onclick="event.stopPropagation();filterType('${t.type}',document.getElementById(t.type==='call'?'ft-call':'ft-cov'))" style="cursor:pointer" title="클릭하여 유형 필터 / Click to filter by type"><span data-ko>${t.tagKo}</span><span data-en>${t.tagEn}</span></span><br><span style="font-size:11px;color:var(--text2);margin-top:2px;display:inline-block;cursor:pointer" onclick="event.stopPropagation();filterSector('${t.sector}',document.getElementById('fs-${t.sector.toLowerCase()}'))" title="클릭하여 섹터 필터 / Click to filter by sector"><span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:${{DeFi:'#22C55E',L1:'#4E80EE',L2:'#F59E0B',Infra:'#6366F1',RWA:'#60A5FA',App:'#F472B6'}[t.sector]||'var(--text2)'};margin-right:3px;vertical-align:middle"></span>${t.sector}</span></td>
       <td class="date-cell">${t.pubDate}<br><span class="days-ago">${pd<7?'<span style="color:var(--green);font-size:9px">● </span>':pd<30?'<span style="color:var(--amber);font-size:9px">● </span>':''}${pd}<span data-ko>일 전</span><span data-en>d ago</span></span></td>
@@ -1169,6 +1169,30 @@ function render(prices){
     afEl.innerHTML=`<span style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em;margin-right:2px"><span data-ko>필터</span><span data-en>Filters</span>:</span>`+chips.map(chip).join('')+(chips.length>1?`<button onclick="clearAllFilters()" style="font-size:11px;font-weight:600;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);color:var(--red);border-radius:4px;padding:2px 8px;cursor:pointer;font-family:inherit"><span data-ko>모두 지우기</span><span data-en>Clear all</span></button>`:'');
     afEl.style.display='flex';
     if(lang==='en')setLang('en');
+  })();
+  // 24h movers strip
+  (function(){
+    const mvEl=document.getElementById('movers-row');
+    if(!mvEl)return;
+    const allWithChange=T.map(t=>{
+      const ch=prices[t.coinId]?.change24h;
+      if(ch==null)return null;
+      return{t,ch};
+    }).filter(Boolean).sort((a,b)=>Math.abs(b.ch)-Math.abs(a.ch));
+    if(allWithChange.length<2){mvEl.style.display='none';return;}
+    const top5=allWithChange.slice(0,5);
+    const sectorColors3={DeFi:'#22C55E',L1:'#4E80EE',L2:'#F59E0B',Infra:'#6366F1',RWA:'#60A5FA',App:'#F472B6'};
+    const chips3=top5.map(({t,ch})=>{
+      const up=ch>=0;const c=up?'var(--green)':'var(--red)';const bg=up?'rgba(34,197,94,0.06)':'rgba(239,68,68,0.06)';
+      const sc=sectorColors3[t.sector]||'var(--text2)';
+      return`<span style="display:inline-flex;align-items:center;gap:5px;background:${bg};border:1px solid ${up?'rgba(34,197,94,0.15)':'rgba(239,68,68,0.15)'};border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer" onclick="setView('tracker',null);setTimeout(()=>{const el=document.getElementById('thesis-${t.coinId}');if(el)el.scrollIntoView({behavior:'smooth',block:'center'})},200)" title="24h 변동 / 24h change">
+        <span style="width:5px;height:5px;border-radius:50%;background:${sc};display:inline-block;flex-shrink:0"></span>
+        <span style="font-weight:700;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px">${t.symbol}</span>
+        <span style="font-weight:700;color:${c};font-family:'JetBrains Mono',monospace">${up?'+':''}${ch.toFixed(1)}%</span>
+      </span>`;
+    }).join('');
+    mvEl.innerHTML=`<span style="font-size:9px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;opacity:0.6">24h</span>${chips3}`;
+    mvEl.style.display='flex';
   })();
   // Latest article indicator
   const latestEl=document.getElementById('latest-article-info');
